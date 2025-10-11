@@ -1,0 +1,25 @@
+{
+  "name": "outfino-ai",
+  "version": "1.0.0",
+  "description": "Outfino AI module - Claude-powered image analysis and outfit rating",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "claude",
+    "fashion",
+    "outfit",
+    "image-analysis"
+  ],
+  "author": "Outfino",
+  "license": "ISC",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.14",
+    "@anthropic-ai/sdk": "^0.65.0",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
