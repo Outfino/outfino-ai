@@ -6,7 +6,8 @@ import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const config = JSON.parse(readFileSync(path.join(__dirname, '../../config/config.json'), 'utf8'));
+// Load config from API directory (parent module)
+const config = JSON.parse(readFileSync(path.join(__dirname, '../../../../../api/src/config/config.json'), 'utf8'));
 const openai = new OpenAI({ apiKey: config.openAI.original.secret });
 
 function loadImageAsBase64(filePath) {

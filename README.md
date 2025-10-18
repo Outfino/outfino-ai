@@ -121,28 +121,55 @@ Body:
 
 ## Claude Integration
 
-The module uses the **Anthropic SDK** to process image analysis requests via Claude API.
+The module uses **Claude Code SDK** (`@instantlyeasy/claude-code-sdk-ts`) which delegates authentication to the Claude CLI. This provides **stable, persistent authentication** without token expiration issues.
 
 ### Requirements
 
-- Anthropic API key (sign up at https://console.anthropic.com/)
-- Set the `ANTHROPIC_API_KEY` environment variable
+1. **Claude Code CLI** installed globally:
+   ```bash
+   npm install -g @anthropic-ai/claude-code
+   ```
+
+2. **One-time authentication** (run once, stays logged in):
+   ```bash
+   claude login
+   ```
+   This creates a persistent session in your system keychain - no more "exit code 1" errors!
+
+3. **Anthropic API key** (fallback for image processing):
+   ```bash
+   export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
+   ```
+   Only needed for requests with images. Text-only requests use the free Claude CLI authentication.
 
 ### How it works
 
-1. Extracts text prompts and image URLs from the request
-2. Converts image URLs to absolute file paths
-3. Reads image files and converts them to base64
-4. Makes API request to Claude with text prompts and base64-encoded images
-5. Returns the response in OpenAI-compatible format
+**For text-only requests:**
+1. Uses Claude Code SDK with CLI authentication
+2. Fluent API: `claude().withModel(...).query(prompt).asText()`
+3. No token management needed - CLI handles it automatically
 
-### Environment Setup
+**For requests with images:**
+1. Detects image content in the request
+2. Automatically falls back to Anthropic SDK (requires API key)
+3. Converts image URLs/paths to base64
+4. Processes images with Claude API
+
+### Authentication Setup
 
 ```bash
+# One-time setup (run on the server where the API is deployed)
+npm install -g @anthropic-ai/claude-code
+claude login
+
+# Follow the browser prompt to authenticate
+# Session is saved to keychain - no expiration!
+
+# For image support, also set API key
 export ANTHROPIC_API_KEY="your-anthropic-api-key-here"
 ```
 
-Or add it to your `.env` file or `~/.zshrc`/`~/.bashrc`
+Or add the API key to your `.env` file, `~/.zshrc`, or `~/.bashrc`
 
 ## Configuration
 
@@ -184,13 +211,29 @@ npm install
 - `express`: Web framework for routing
 - `multer`: Multipart form data handling for file uploads
 
-## Migration from Azure OpenAI
+## Migration History
 
-This module was originally part of the main API and used Azure OpenAI. Key changes during migration:
+### From Azure OpenAI → Claude Agent SDK → Claude Code SDK
 
+This module has evolved through multiple AI provider changes:
+
+**v1.0 - Azure OpenAI**
+- Original implementation using Azure OpenAI API
+- Required API keys and had usage costs
+
+**v2.0 - Claude Agent SDK** (`@anthropic-ai/claude-agent-sdk`)
+- Migrated to Claude Agent SDK for free Claude Pro integration
+- **Problem**: Frequent "exit code 1" errors due to session token expiration
+
+**v3.0 - Claude Code SDK** (`@instantlyeasy/claude-code-sdk-ts`) ✅ Current
+- **Fixed**: Token expiration issues with persistent CLI authentication
+- **Benefit**: No more manual token regeneration
+- **Hybrid**: Uses Claude Code SDK for text, Anthropic SDK for images
+
+Key changes:
 1. **Separated module**: Moved all AI-related code to a standalone module
 2. **Dependency injection**: All API dependencies are now injected at initialization
-3. **Claude CLI**: Replaced Azure OpenAI SDK with local Claude CLI execution
+3. **Stable auth**: CLI-based authentication with no expiration
 4. **Same prompts**: Reused existing prompts from config.json
 5. **Compatible responses**: Returns responses in the same format as Azure OpenAI
 

@@ -1,4 +1,4 @@
-import claudeRequest from "../../../utils/ai_request/claude_request.js";
+import aiRequest from "../../../utils/ai_request/ai_request.js";
 
 export default async function whichIsBetterRating(req, res, apiDeps) {
 	const {
@@ -84,7 +84,7 @@ export default async function whichIsBetterRating(req, res, apiDeps) {
 		}]
 
 		try {
-			let response = await claudeRequest(prompt);
+			let response = await aiRequest(prompt, { config });
 			const messageContent = response.choices[0].message.content;
 
 			if(messageContent.includes("no_clothes_detected")) throw new ApiError(StatusCodes.BAD_REQUEST, ErrorCodes.NO_CLOTHES_DETECTED);

@@ -1,4 +1,4 @@
-import claudeRequest from "../../../utils/ai_request/claude_request.js";
+import aiRequest from "../../../utils/ai_request/ai_request.js";
 
 export default async function generatePalette(req, res, apiDeps) {
 	const {
@@ -66,7 +66,7 @@ async function setStyle(user, config, IdealColorsDB) {
 		},
 	];
 
-	let response = await claudeRequest(prompt);
+	let response = await aiRequest(prompt, { config });
 	const aiMessage = JSON.parse(response.choices[0].message.content);
 
 	IdealColorsDB.destroy({ where: { userId: user.id } });
