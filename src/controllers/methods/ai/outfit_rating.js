@@ -7,6 +7,7 @@ export default async function outfitRating(req, res, apiDeps) {
 		respondError,
 		StatusCodes,
 		OutfitRatingsDB,
+		UsersDB,
 		mkdir,
 		StoragePaths,
 		saveFile,
@@ -39,10 +40,13 @@ export default async function outfitRating(req, res, apiDeps) {
 		const user = await validateRequestUser(userId);
 
 		if(!req.files[0]) throw new ApiError(StatusCodes.BAD_REQUEST, ErrorCodes.IMAGE_MISSING);
-	
+
+		const friendsOnly = req.body.friendsOnly === true || req.body.friendsOnly === 'true';
+
 		rating = await OutfitRatingsDB.create({
 			userId,
-			mode: 'OUTFIT_RATING'
+			mode: 'OUTFIT_RATING',
+			friendsOnly
 		});
 
 		const image = req.files[0];
@@ -108,6 +112,10 @@ export default async function outfitRating(req, res, apiDeps) {
 			await rating.update({ score: message['score'], response: message });
 
 			Analytics.logFunctionUsage(userId, FunctionCodes.OUTFIT_RATING);
+
+			// Update streak when user creates an outfit rating
+			await updateStreak(user, UsersDB);
+
 			console.log('✅ Outfit rating completed successfully');
 			respondOK(res, StatusCodes.OK, rating);
 		} catch (error) {
@@ -234,5 +242,43 @@ async function handleEventBasedRating(req, res, apiDeps, eventCode, language) {
 	} catch (exception) {
 		console.error('❌ Event-based rating error:', exception);
 		respondError(res, exception);
+	}
+}
+
+/**
+ * Updates user's streak count based on outfit rating creation
+ * @param {Object} user - User object from database
+ * @param {Object} UsersDB - Users database model
+ */
+async function updateStreak(user, UsersDB) {
+	const streakDate = new Date(user.dataValues['streak']);
+	const currentDate = new Date();
+
+	// Normalize dates to start of day for comparison
+	const streakStartDate = new Date(streakDate.getFullYear(), streakDate.getMonth(), streakDate.getDate());
+	const currentStartDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+
+	const differenceInTime = currentStartDate - streakStartDate;
+	const differenceInDays = Math.floor(differenceInTime / (1000 * 60 * 60 * 24));
+
+	if (differenceInDays === 0) {
+		// Same day - no update needed
+		console.log('🔥 Streak: Same day, no update');
+		return;
+	} else if (differenceInDays === 1) {
+		// Consecutive day - increment streak
+		const newStreakCount = (user.dataValues['streakCount'] || 0) + 1;
+		await user.update({
+			streak: currentDate,
+			streakCount: newStreakCount
+		});
+		console.log(`🔥 Streak: Incremented to ${newStreakCount}`);
+	} else if (differenceInDays >= 2) {
+		// Streak broken - reset to 1
+		await user.update({
+			streak: currentDate,
+			streakCount: 1
+		});
+		console.log('🔥 Streak: Reset to 1 (streak broken)');
 	}
 }
