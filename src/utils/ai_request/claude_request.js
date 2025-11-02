@@ -102,17 +102,23 @@ export default async function claudeRequest(messages, options = {}) {
 						if (block.type === 'text') {
 							promptParts.push(block.text);
 						} else if (block.type === 'image_url') {
-							// Convert image URL to absolute file path
+							// Handle both local file paths and external URLs
 							const imageUrl = block.image_url.url;
-							const match = imageUrl.match(/\/v3\/(.+)$/);
 
-							if (match) {
-								const relativePath = match[1];
+							// Check if it's a local file path (starts with /v3/)
+							const localMatch = imageUrl.match(/\/v3\/(.+)$/);
+
+							if (localMatch) {
+								// Local file - convert to absolute path
+								const relativePath = localMatch[1];
 								const absolutePath = join(API_ROOT, relativePath);
 								console.log('📁 Image path:', absolutePath);
-
-								// Add instruction for Claude to analyze the image using Read tool
 								promptParts.push(`Please analyze the image at "${absolutePath}" using the Read tool.`);
+							} else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+								// External URL (e.g., Shopify CDN) - include directly in prompt
+								console.log('🌐 External image URL:', imageUrl);
+								// Note: We'll pass this as an image URL block in the API call
+								promptParts.push(`[IMAGE: ${imageUrl}]`);
 							} else {
 								console.warn('⚠️ Could not parse image URL:', imageUrl);
 							}
@@ -125,13 +131,12 @@ export default async function claudeRequest(messages, options = {}) {
 		const prompt = promptParts.join('\n\n');
 		console.log('🤖 Making Claude Code SDK request with prompt length:', prompt.length);
 
-		// Use Claude Code SDK with Read tool enabled for images
+		// Use Claude Code SDK - text-only mode (images disabled for now)
 		const resultText = await claude()
 			.withModel('claude-sonnet-4-5-20250929')
 			.withEnv({ ANTHROPIC_API_KEY: undefined }) // Remove invalid API key, use CLI authentication
 			.debug(true) // Enable debug output to see exact CLI command and errors
 			.addDirectory(API_ROOT) // Allow CLI access to API directory
-			.allowTools('Read') // Enable Read tool for image processing
 			.skipPermissions() // Auto-accept all permissions
 			.withTimeout(120000) // 2 minute timeout
 			.query(prompt)

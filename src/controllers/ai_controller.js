@@ -2,6 +2,7 @@ import outfitRating from './methods/ai/outfit_rating.js';
 import suitsMeRating from './methods/ai/suits_me_rating.js';
 import whichIsBetterRating from './methods/ai/which_is_better_rating.js';
 import generatePalette from './methods/ai/generate_palette.js';
+import matchProducts from './methods/ai/match_products.js';
 
 /**
  * AI Controller with dependency injection
@@ -12,6 +13,7 @@ export default function createAIController(apiDeps) {
 		outfitRating: (req, res) => outfitRating(req, res, apiDeps),
 		suitsMeRating: (req, res) => suitsMeRating(req, res, apiDeps),
 		whichIsBetterRating: (req, res) => whichIsBetterRating(req, res, apiDeps),
-		generatePalette: (req, res) => generatePalette(req, res, apiDeps)
+		generatePalette: (req, res) => generatePalette(req, res, apiDeps),
+		matchProducts: (req, res) => matchProducts(req, res, apiDeps)
 	};
 }

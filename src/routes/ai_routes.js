@@ -14,6 +14,7 @@ export default function createAIRoutes(aiController) {
 	router.post('/rating/suits-me', upload.array('files'), aiController.suitsMeRating);
 	router.post('/rating/which-is-better', upload.array('files'), aiController.whichIsBetterRating);
 	router.post('/generate-palette', upload.array('files'), aiController.generatePalette);
+	router.post('/match-products', aiController.matchProducts);
 
 	return router;
 }
